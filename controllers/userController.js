@@ -62,8 +62,11 @@ exports.updateUser = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
   try {
-    await req.user.deleteOne();
+    const user = await User.findOne({ _id: req.params.id });
+    user.deleteOne()
     res.json({ message: 'User Deleted' });
+    res.json
+    
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -71,10 +74,9 @@ exports.deleteUser = async (req, res) => {
 
 exports.logoutUser = async (req, res, next) => {
   try {
-    const user  =  req.body.email
-    const token = null;
-    res.json({ user, token, message:'Logout Sucessful'} );
-    //res.redirect('/'); //cannot do multiple responses here??
+    const user  =  await req.body.email
+    // const token = null;
+    res.json({ user, message:'Logout Sucessful'} );
     
   } catch (error) {
     res.status(421).json({ message: error.message });

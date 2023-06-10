@@ -59,7 +59,6 @@ afterAll(async ()=>{
         .send({email:'john.doe@example.com', password:'password123'})
 
         //expect(response.body.email).toBe('john.doe@example.com')  //this is unnecessary for now because the email is irrelevant information for logout
-        expect(response.body.token).toBe(null)
         expect(response.body.message).toBe('Logout Sucessful')
         
       })
@@ -76,7 +75,7 @@ afterAll(async ()=>{
 
         const token = await user.generateAuthToken()
         const response = await request(app)
-        
+
         .put(`/users/${user._id}`)
         .set('Authorization', `Bearer ${token}`) 
         .send({ name: 'Rufia', email: 'rufioyrael@gmail.com', password:'newPassword123'})
@@ -89,12 +88,20 @@ afterAll(async ()=>{
       
 
       test('It should delete the user', async ()=>{
-        const user = new User({ name: 'John Doe', email: 'john.doe@example.com', password: 'password123' })
-        await user.save()
-        const token = await user.generateAuthToken()
+        const user = new User({ 
+          name: 'John Doe', 
+          email: 'john.doe@example.com', 
+          password: 'password123' 
+        })
 
+        await user.save()
+
+        const token = await user.generateAuthToken()
         const response = await request(app)
-        .delete('/:id')
+
+        .delete( `/users/${user.id}`)
+        .set('Authorization', `Bearer ${token}`)
+
         
         expect(response.body.message).toEqual('User Deleted')
       })
