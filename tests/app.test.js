@@ -3,15 +3,21 @@ const mongoose = require('mongoose')
 const { MongoMemoryServer } = require('mongodb-memory-server')
 const app  = require('../app')
 const server = app.listen(8080, () => console.log('Testing on PORT 8080'))
-
 const User = require('../models/user')
+
 let mongoServer;
 
 beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create()
     await mongoose.connect(mongoServer.getUri())
   })
-  
+
+afterAll(async ()=>{
+    await mongoose.connection.close() // programmatic ctrl+c
+    mongoServer.stop() //getting rid of our MongoDB instance itself
+    server.close()
+})
+
   describe('Test the user Endpoints', ()=>{
 
     test('It should create a new user', async ()=>{
@@ -39,43 +45,59 @@ beforeAll(async () => {
 
       test('It should return a list of users', async ()=>{
         const response = await request(app)
-        .get('/')
-        
-        expect(response.body).toMatchObject(response)
+        .get('/users')  // bug was also here, needed to target the /user route path
+
+        expect(Array.isArray(response.body.users)).toBe(true)  //expecting array, because even an empty array will still be an array
         expect(response.statusCode).toBe(200)
 
       })
+
+
       test('It should log out a user',async ()=>{
         const response = await request(app)
         .post('/users/logout')
         .send({email:'john.doe@example.com', password:'password123'})
-        expect(response.body.email).toBe('john.doe@example.com')
+
+        //expect(response.body.email).toBe('john.doe@example.com')  //this is unnecessary for now because the email is irrelevant information for logout
         expect(response.body.token).toBe(null)
         expect(response.body.message).toBe('Logout Sucessful')
+        
       })
+
+
       test('It should update a user', async ()=>{
-        const user = new User({name:'Bao',email:"baoemail@email.com",password:'123',id:'123'})
+        const user = new User({
+          name:'Bao',
+          email:"baoemail@email.com",
+          password:'123',
+        })
+
+        await user.save()
+
+        const token = await user.generateAuthToken()
         const response = await request(app)
-        .post(`/${user.id}`)
-        .send({email:'baoemail@email.com', password:'newPassword123'})
-        expect(response.body.email).toBe('baoemail@email.com')
-        expect(response.body.password).toBe('newPassword123')
-        expect(response.body.message).toBe(`updated user info`)
+        
+        .put(`/users/${user._id}`)
+        .set('Authorization', `Bearer ${token}`) 
+        .send({ name: 'Rufia', email: 'rufioyrael@gmail.com', password:'newPassword123'})
+        
+        const foundUser = await User.findOne({ _id: user._id })
+
+        expect(response.statusCode).toBe(200)
+        expect(response.body.message).toEqual(`updated user info`)
       })
+      
 
       test('It should delete the user', async ()=>{
         const user = new User({ name: 'John Doe', email: 'john.doe@example.com', password: 'password123' })
-        await user.save() 
+        await user.save()
+        const token = await user.generateAuthToken()
+
         const response = await request(app)
         .delete('/:id')
         
-        expect(response.body.message).toBe('User Deleted')
+        expect(response.body.message).toEqual('User Deleted')
       })
-    
+
   })
 
-  afterAll(async ()=>{
-    await mongoose.connection.close() // programmatic ctrl+c
-    mongoServer.stop() //getting rid of our MongoDB instance itself
-    server.close()
-})

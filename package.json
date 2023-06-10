@@ -6,7 +6,7 @@
     "test": "jest",
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "load":"artillery run tests/artillery.yml"
+    "load": "artillery run tests/artillery.yml"
   },
   "jest": {
     "testEnvironment": "node"
