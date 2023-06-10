@@ -44,6 +44,7 @@ exports.loginUser = async (req, res) => {
   }
 };
 
+
 exports.updateUser = async (req, res) => {
   try {
     const updates = Object.keys(req.body);
@@ -55,6 +56,9 @@ exports.updateUser = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+// user.findOneAndUpdate  (this is the single line code for finding one and updating)
+
 
 exports.deleteUser = async (req, res) => {
   try {
@@ -69,8 +73,8 @@ exports.logoutUser = async (req, res, next) => {
   try {
     const user  =  req.body.email
     const token = null;
-    res.json({ user, token,message:'Logout Sucessful'} );
-    res.redirect('/');
+    res.json({ user, token, message:'Logout Sucessful'} );
+    //res.redirect('/'); //cannot do multiple responses here??
     
   } catch (error) {
     res.status(421).json({ message: error.message });
@@ -82,7 +86,7 @@ exports.listUsers = async (req, res) => {
 
    const listUsers = await User.find({});
    console.log(listUsers)
-     res.render('../views/Index', {
+     res.json({            // this is where the bug was, "res.render" was sending a webpage with html data, and not actual json data
        users: listUsers,
      });
     
